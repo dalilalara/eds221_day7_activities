@@ -1,0 +1,123 @@
+---
+title: "EDS 221 Day 4 Activities"
+author: "Dalila Lara"
+date: "2022-08-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(here)
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+library(datapasta)
+```
+
+# Task 1 Join on birds
+
+```{r}
+#Read in data
+bird_observations <- read_csv(here("data", "52_pp52_birds_1.csv"))
+
+sites <- read_csv(here("data", "52_pp52_sites_1.csv"))
+  
+surveys <- read_csv(here("data", "52_pp52_surveys_1.csv"))
+  
+taxalist <- read_csv(here("data", "52_pp52_taxalist_1.csv"))
+```
+
+```{r}
+#subset of bird observation with species BHCO RWBL from sites id LI-W & NU-C
+bird_subset <- bird_observations |>
+  filter(species_id %in% c("BHCO", "RWBL")) |>
+  filter(site_id %in% c("LI-W", "NU-C"))
+```
+
+```{r}
+#Left Join
+#update subset so it includes sites and taxa list data frame data
+
+# k <- left_join(x, y by = "a") |> left_join( w, by = "b")
+
+birds_left <- bird_subset |>
+  left_join(sites, by = "site_id") |>
+  left_join(taxalist, by = "species_id")
+```
+
+```{r}
+# full_join() joins data regardless of variables not matching does not exclude any data
+
+bird_full <- bird_subset |>
+  full_join(sites)
+```
+
+```{r}
+#inner_join() will match info to both data frames x and y and only keep that 
+bird_inner <- bird_subset |>
+  inner_join(taxalist, by = "species_id")
+
+#left_join vs inner_join
+bird_left_join <- bird_subset |>
+  left_join(taxalist, by = "species_id")
+
+#left matches x variables to y outcomes of data sets only to include those 
+
+#left and inner will differ when we have more matches in the data...
+```
+
+# Task 2 Data wrangaling and visualization with birds
+```{r}
+#rename surveys data col. notes to bird_obs_notes
+surveys_obs_notes <- surveys |>
+  rename(birds_obs_notes = notes)
+```
+
+```{r}
+#create subset with data of all 4 sets with only specified columns below
+b_4 <- bird_observations |>
+  full_join(sites) |>
+  full_join(surveys) |>
+  full_join(taxalist) |>
+  select(survey_date, common_name, park_name, bird_count)
+```
+
+```{r}
+#Add new column survey_month with month number then convert month number to a factor
+
+b_5 <- b_4 |>
+  mutate(date = ymd(survey_date)) |>
+  mutate(survey_month = month(survey_date)) |>
+  mutate(survey_month = as.factor(survey_month)) |>
+  relocate(survey_month, .after = survey_date) |>
+  group_by(park_name, survey_month)
+  
+
+class(b_5$survey_month)
+
+#dplyr::relocate() move new survey_month column to after survey_date
+```
+
+```{r}
+#find total number of birds ovserved by park and month group_by(park_name, survey_month)
+total_birds <- b_5 |>
+  group_by(park_name, survey_month) |>
+  summarize()
+```
+
+```{r}
+#filter to include pakr "Lindo" "Orme" "Palomin" "Sonrisa"
+parks_s <- b_4 |>
+  filter(park_name %in% c("Lindo", "Orme", "Palomino", "Sonrisa"))
+```
+
+
+
+
+
+
+
+
